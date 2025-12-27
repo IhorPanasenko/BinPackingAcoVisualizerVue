@@ -116,15 +116,27 @@ export class AsRankAlgorithm {
     // W найкращих мурах додають феромон
     for (let rank = 0; rank < W; rank++) {
       const antSolution = antSolutions[rank]
-      const depositAmount = (W - rank) * (1.0 / antSolution.numBins)
+      // Вага зменшується зі збільшенням рангу (0 - найкращий)
+      const weight = W - rank
+      const depositAmount = weight * (1.0 / antSolution.numBins)
 
-      const order = antSolution.order
-      for (let k = 0; k < order.length - 1; k++) {
-        const id_i = order[k].id
-        const id_j = order[k + 1].id
-        if (p[id_i] && p[id_i][id_j] !== undefined) {
-          p[id_i][id_j] += depositAmount
-        }
+      this._depositPheromoneOnPath(p, antSolution.order, depositAmount)
+    }
+
+    // 3. Елітарність (Global Best) - ОБОВ'ЯЗКОВО для AS-Rank
+    if (this.globalBestSolution) {
+      // Global Best зазвичай має вагу W (як найкраща мураха ітерації)
+      const depositAmount = W * (1.0 / this.globalBestSolution.numBins)
+      this._depositPheromoneOnPath(p, this.globalBestSolution.order, depositAmount)
+    }
+  }
+
+  private _depositPheromoneOnPath(p: number[][], order: Item[], amount: number) {
+    for (let k = 0; k < order.length - 1; k++) {
+      const id_i = order[k].id
+      const id_j = order[k + 1].id
+      if (p[id_i] && p[id_i][id_j] !== undefined) {
+        p[id_i][id_j] += amount
       }
     }
   }
